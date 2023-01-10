@@ -1,2 +1,2 @@
 # arkanoidC
-Projekt ARKANOIDA w SDL (C)
+Projekt ARKANOIDA w SDL2 (C)
