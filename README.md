@@ -7,14 +7,14 @@ Projekt ARKANOIDA w SDL2 (C)
 > <kbd>Q</kbd> &rarr; Wyjscie
 
 ### Kompilacja i uruchomienie
-> Kompilacja:
-> ./build.sh 
-> Nastepnie:
-> ./a.out (odpala gre ze standardowa mapa)
-> Opcjonalnie:
+> Kompilacja:</br>
+> ./build.sh</br>
+> Nastepnie:</br>
+> ./a.out (odpala gre ze standardowa mapa)</br>
+> Opcjonalnie:</br>
 > ./a.out [nazwa pliku] (odpala gre ze wczytana mapa z pliku)
 ### Zawartosc pliku
-> Maksymalnie 14 kolumn. Rzedow nie moze byc wiecej niz 9, a caly rzad MUSI byc wypelniony.</br>
+> Maksymalnie 14 kolumn. Rzedow nie moze byc wiecej niz 9, a caly rzad MUSI byc wypelniony.
 > 0 - puste miejsce</br>
 > 1 - cegielka</br>
 > Podanie zbyt duzej ilosci kolumn lub rzedow albo nie wypelnienie calego rzedu zainicjuje odpalenie ze standardowa mapa.
