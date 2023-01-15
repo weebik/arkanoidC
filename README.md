@@ -15,11 +15,11 @@ Projekt ARKANOIDA w SDL2 (C)
 > ./a.out [nazwa pliku] (odpala gre ze wczytana mapa z pliku)
 ### Zawartosc pliku
 > Maksymalnie 14 kolumn. Rzedow nie moze byc wiecej niz 9, a caly rzad MUSI byc wypelniony.</br>
-> 0 - puste miejsce
-> 1 - cegielka
+> 0 - puste miejsce</br>
+> 1 - cegielka</br>
 > Podanie zbyt duzej ilosci kolumn lub rzedow albo nie wypelnienie calego rzedu zainicjuje odpalenie ze standardowa mapa.
 ###### Przykladowa zawartosc pliku
-> 01010101010101
-> 10101010101010
-> 01010101010101
-> 10101010101010
+> 01010101010101</br>
+> 10101010101010</br>
+> 01010101010101</br>
+> 10101010101010</br>
