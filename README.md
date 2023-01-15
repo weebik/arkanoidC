@@ -11,7 +11,7 @@
 > Nastepnie:</br>
 > `./a.out` (odpala gre ze standardowa mapa)</br>
 > Opcjonalnie:</br>
-> `./a.out [nazwa pliku]` (odpala gre ze wczytana mapa z pliku)</br>
+> `./a.out [nazwa pliku]` (odpala gre z wczytana mapa z pliku)</br>
 > Upewnij sie ze masz zainstalowane SDL2</br>
 >`sudo apt-get install libsdl2-dev`
 ### Zawartosc pliku

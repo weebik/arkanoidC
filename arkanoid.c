@@ -68,11 +68,11 @@ void paddle_bounce(void)
     {
         if (bounceAngle > 0)
             bounceAngle += 0.1;
-        else if(bounceAngle < 0)
+        else if (bounceAngle < 0)
             bounceAngle -= 0.1;
         else
         {
-            if(rand()%2==0)
+            if (rand() % 2 == 0)
                 bounceAngle += 0.1;
             else
                 bounceAngle -= 0.1;
@@ -171,8 +171,11 @@ int main(int argc, char *argv[])
             defaultMapInit();
             fprintf(stderr, "Failed at opening File\n");
         }
-        customMapInit(file);
-        fclose(file);
+        else
+        {
+            customMapInit(file);
+            fclose(file);
+        }
     }
     else
     {
