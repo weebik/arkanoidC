@@ -1,10 +1,10 @@
 # arkanoidC
 Projekt ARKANOIDA w SDL2 (C)
 ### Klawiszologia
-> <kbd>A</kbd> lub <kbd>🢀</kbd> &rarr; Ruch w lewo
-> <kbd>D</kbd> lub <kbd>🢂</kbd> &rarr; Ruch w prawo
-> <kbd>R</kbd> &rarr; Reset
-> <kbd>Q</kbd> &rarr; Wyjscie
+> <kbd>A</kbd> lub <kbd>🢀</kbd> &rarr; Ruch w lewo</br>
+> <kbd>D</kbd> lub <kbd>🢂</kbd> &rarr; Ruch w prawo</br>
+> <kbd>R</kbd> &rarr; Reset</br>
+> <kbd>Q</kbd> &rarr; Wyjscie</br>
 
 ### Kompilacja i uruchomienie
 > Kompilacja:</br>
@@ -18,7 +18,7 @@ Projekt ARKANOIDA w SDL2 (C)
 > 0 - puste miejsce</br>
 > 1 - cegielka</br>
 > Podanie zbyt duzej ilosci kolumn lub rzedow albo nie wypelnienie calego rzedu zainicjuje odpalenie ze standardowa mapa.
-###### Przykladowa zawartosc pliku
+### Przykladowa zawartosc pliku
 > 01010101010101</br>
 > 10101010101010</br>
 > 01010101010101</br>
