@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <time.h>
 #include <SDL2/SDL.h>
 
 #define SCREEN_WIDTH 1000
@@ -62,16 +63,24 @@ void paddle_bounce(void)
     float relativeIntersectX = (paddle.x + (paddle.w / 2)) - (ball.x + (BALL_DIAMETER / 2));
     float normalizedRelativeIntersectX = relativeIntersectX / (paddle.w / 2);
     float bounceAngle = normalizedRelativeIntersectX * (5 * 3.1415 / 20); // max angle
-    mvX = BALL_SPEED * -sin(bounceAngle);
     printf("bounce: %f ", bounceAngle);
-    if (fabs(bounceAngle) < 0.1)
+    if (fabs(bounceAngle) < 0.5)
     {
         if (bounceAngle > 0)
-            mvX += 1;
+            bounceAngle += 0.1;
+        else if(bounceAngle < 0)
+            bounceAngle -= 0.1;
         else
-            mvX -= 1;
+        {
+            if(rand()%2==0)
+                bounceAngle += 0.1;
+            else
+                bounceAngle -= 0.1;
+        }
+        printf(" DODANO ");
     }
-    printf("%f\n",mvX);
+    printf("bounce: %f \n", bounceAngle);
+    mvX = BALL_SPEED * -sin(bounceAngle);
     mvY = -BALL_SPEED * cos(bounceAngle);
     return;
     // https://gamedev.stackexchange.com/questions/4253/in-pong-how-do-you-calculate-the-balls-direction-when-it-bounces-off-the-paddl
@@ -151,6 +160,7 @@ int main(int argc, char *argv[])
         fprintf(stderr, "Failed at Creating Window\n");
     SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "linear");
     SDL_Event event;
+    srand(time(NULL));
     is_running = 1;
     int lastTime = 0;
     if (argc == 2)
