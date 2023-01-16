@@ -1,1 +1,0 @@
-gcc -std=c11 -xc -o start arkanoid.c -lSDL2 -lm
