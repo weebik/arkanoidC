@@ -6,14 +6,14 @@
 > <kbd>Q</kbd> &rarr; Wyjscie</br>
 
 ### Kompilacja i uruchomienie
+> **Upewnij sie ze masz zainstalowane SDL2**</br>
+>`sudo apt-get install libsdl2-dev`
 > Kompilacja:</br>
 > `./build.sh`</br>
 > Nastepnie:</br>
 > `./a.out` (odpala gre ze standardowa mapa)</br>
 > Opcjonalnie:</br>
 > `./a.out [nazwa pliku]` (odpala gre z wczytana mapa z pliku)</br>
-> Upewnij sie ze masz zainstalowane SDL2</br>
->`sudo apt-get install libsdl2-dev`
 ### Zawartosc pliku
 > Maksymalnie 14 kolumn. Rzedow nie moze byc wiecej niz 9, a caly rzad MUSI byc wypelniony.</br>
 > 0 - puste miejsce</br>
