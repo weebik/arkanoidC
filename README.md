@@ -11,9 +11,9 @@
 > Kompilacja:</br>
 > `./build.sh`</br>
 > Nastepnie:</br>
-> `./a.out` (odpala gre ze standardowa mapa)</br>
+> `./start` (odpala gre ze standardowa mapa)</br>
 > Opcjonalnie:</br>
-> `./a.out [nazwa pliku]` (odpala gre z wczytana mapa z pliku)</br>
+> `./start [nazwa pliku]` (odpala gre z wczytana mapa z pliku)</br>
 ### Zawartosc pliku
 > Maksymalnie 14 kolumn. Rzedow nie moze byc wiecej niz 9, a caly rzad MUSI byc wypelniony.</br>
 > 0 - puste miejsce</br>
