@@ -18,6 +18,7 @@
 #define MAX_ROW 9
 #define MAX_COL 14
 #define BRICK_HEIGHT 40
+#define FPS 30
 
 SDL_Renderer *renderer;
 SDL_Window *window;
@@ -75,7 +76,7 @@ void defaultMapInit(void)
 
 void customMapInit(FILE *file)
 {
-    int c;
+    int c, cnt = 0;
     for (int i = 0; i <= MAX_ROW; i++)
     {
         if (i == MAX_ROW && c != EOF)
@@ -108,8 +109,17 @@ void customMapInit(FILE *file)
                 }
             }
             map[i][j] = c - '0';
+            if (map[i][j] == 1)
+                cnt++;
         }
     }
+    if (cnt == 0)
+    {
+        fprintf(stderr, "Wrong file contents. Initializing default map.\n");
+        defaultMapInit();
+        return;
+    }
+    return;
 }
 
 void paddle_bounce(void)
@@ -121,7 +131,10 @@ void paddle_bounce(void)
     float bounceAngle = normalizedRelativeIntersectX * (3.1415 / 4); // max angle
     if (ball.x + (BALL_DIAMETER / 2) >= paddle.x + (PADDLE_WIDTH / 2) - delta && ball.x + (BALL_DIAMETER / 2) <= paddle.x + (PADDLE_WIDTH / 2) + delta)
     {
-        bounceAngle+=0.1; //fixing verticle ball bounce loop
+        if (rand() % 2 == 0) // fixing verticle ball bounce loop
+            bounceAngle += 0.1;
+        else
+            bounceAngle -= 0.1;
     }
     mvX = BALL_SPEED * -sin(bounceAngle);
     mvY = -BALL_SPEED * cos(bounceAngle);
@@ -159,10 +172,8 @@ void prepare(void)
             {
                 blocks_on--;
                 bricks[i][j] = 0;
-                int is_bounce_Y = 0;
                 if (ball.y + BALL_DIAMETER / 2 >= brick.y + brick.h || ball.y + BALL_DIAMETER / 2 <= brick.y)
                 {
-                    is_bounce_Y = 1;
                     mvY = -mvY;
                     return;
                 }
@@ -202,19 +213,10 @@ void input(void)
     return;
 }
 
-/*void optimizeFrames(void)
-{
-    timerFPS = SDL_GetTicks64() - lastFrame;
-    if (timerFPS < (MAX_DELAY / MAX_FPS))
-        SDL_Delay((MAX_DELAY / MAX_FPS) - timerFPS);
-    return;
-}*/
-
 void draw(void)
 {
     SDL_SetRenderDrawColor(renderer, 40, 2, 30, 255);
     SDL_RenderClear(renderer);
-    // optimizeFrames();
     SDL_SetRenderDrawColor(renderer, 238, 129, 179, 255);
     SDL_RenderFillRect(renderer, &paddle);
     SDL_SetRenderDrawColor(renderer, 255, 249, 215, 255);
@@ -246,7 +248,6 @@ int main(int argc, char *argv[])
     srand(time(NULL));
     is_running = 1;
     unsigned int ticks;
-    const int FPS = 30;
     if (argc == 2)
     {
         FILE *file = fopen(argv[1], "r");
@@ -275,11 +276,6 @@ int main(int argc, char *argv[])
         while (SDL_PollEvent(&event))
             if (event.type == SDL_QUIT)
                 is_running = 0;
-        /*lastFrame = SDL_GetTicks64();
-        if (lastFrame >= (lastTime + MAX_DELAY))
-        {
-            lastTime = lastFrame;
-        }*/
         prepare();
         input();
         draw();
