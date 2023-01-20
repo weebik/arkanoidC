@@ -13,11 +13,11 @@
 #define PADDLE_HEIGHT 20
 #define PADDLE_SPEED 15
 #define PADDLE_Y 800
-#define BALL_DIAMETER 25
+#define BALL_DIAMETER 20
 #define BALL_SPEED 15
 #define MAX_ROW 9
 #define MAX_COL 14
-#define BRICK_HEIGHT 20
+#define BRICK_HEIGHT 40
 
 SDL_Renderer *renderer;
 SDL_Window *window;
@@ -75,10 +75,15 @@ void defaultMapInit(void)
 
 void customMapInit(FILE *file)
 {
-    int row = 0, col = 0;
     int c;
     for (int i = 0; i <= MAX_ROW; i++)
     {
+        if (i == MAX_ROW && c != EOF)
+        {
+            fprintf(stderr, "Wrong file contents. Initializing default map.\n");
+            defaultMapInit();
+            return;
+        }
         for (int j = 0; j <= MAX_COL; j++)
         {
             c = getc(file);
@@ -109,22 +114,14 @@ void customMapInit(FILE *file)
 
 void paddle_bounce(void)
 {
+    float delta = 2;
+    ball.y = paddle.y - BALL_DIAMETER;
     float relativeIntersectX = (paddle.x + (paddle.w / 2)) - (ball.x + (BALL_DIAMETER / 2));
     float normalizedRelativeIntersectX = relativeIntersectX / (paddle.w / 2);
-    float bounceAngle = normalizedRelativeIntersectX * (5 * 3.1415 / 20); // max angle
-    if (fabs(bounceAngle) < 0.1)
+    float bounceAngle = normalizedRelativeIntersectX * (3.1415 / 4); // max angle
+    if (ball.x + (BALL_DIAMETER / 2) >= paddle.x + (PADDLE_WIDTH / 2) - delta && ball.x + (BALL_DIAMETER / 2) <= paddle.x + (PADDLE_WIDTH / 2) + delta)
     {
-        if (bounceAngle > 0)
-            bounceAngle += 0.1;
-        else if (bounceAngle < 0)
-            bounceAngle -= 0.1;
-        else
-        {
-            if (rand() % 2 == 0)
-                bounceAngle += 0.1;
-            else
-                bounceAngle -= 0.1;
-        }
+        bounceAngle+=0.1; //fixing verticle ball bounce loop
     }
     mvX = BALL_SPEED * -sin(bounceAngle);
     mvY = -BALL_SPEED * cos(bounceAngle);
@@ -147,9 +144,8 @@ void prepare(void)
         ball.y = 0;
         mvY = -mvY;
     }
-    if (ball.y + BALL_DIAMETER / 2 >= PADDLE_Y + PADDLE_HEIGHT / 2)
+    if (ball.y + BALL_DIAMETER / 2 >= PADDLE_Y)
         resetGame();
-
     ball.x += mvX;
     ball.y += mvY;
 
@@ -163,14 +159,28 @@ void prepare(void)
             {
                 blocks_on--;
                 bricks[i][j] = 0;
-                mvY = -mvY;
-                if (ball.y <= brick.y)
+                int is_bounce_Y = 0;
+                if (ball.y + BALL_DIAMETER / 2 >= brick.y + brick.h || ball.y + BALL_DIAMETER / 2 <= brick.y)
                 {
-                    ball.y = ball.y - 20;
+                    is_bounce_Y = 1;
+                    mvY = -mvY;
+                    return;
                 }
-                if (ball.y >= brick.y)
+                if (mvY < 0 && mvX > 0 && ball.y + (BALL_DIAMETER / 2) >= brick.y && ball.y <= brick.y + brick.h)
                 {
-                    ball.y = ball.y + 20;
+                    mvX = -mvX;
+                }
+                else if (mvY < 0 && mvX < 0 && ball.y + (BALL_DIAMETER / 2) >= brick.y && ball.y <= brick.y + brick.h)
+                {
+                    mvX = -mvX;
+                }
+                else if (mvY > 0 && mvX > 0 && ball.y + (BALL_DIAMETER / 2) >= brick.y && ball.y <= brick.y + brick.h)
+                {
+                    mvX = -mvX;
+                }
+                else if (mvY > 0 && mvX < 0 && ball.y + (BALL_DIAMETER / 2) >= brick.y && ball.y <= brick.y + brick.h)
+                {
+                    mvX = -mvX;
                 }
             }
         }
@@ -192,19 +202,19 @@ void input(void)
     return;
 }
 
-void optimizeFrames(void)
+/*void optimizeFrames(void)
 {
     timerFPS = SDL_GetTicks64() - lastFrame;
     if (timerFPS < (MAX_DELAY / MAX_FPS))
         SDL_Delay((MAX_DELAY / MAX_FPS) - timerFPS);
     return;
-}
+}*/
 
 void draw(void)
 {
     SDL_SetRenderDrawColor(renderer, 40, 2, 30, 255);
     SDL_RenderClear(renderer);
-    optimizeFrames();
+    // optimizeFrames();
     SDL_SetRenderDrawColor(renderer, 238, 129, 179, 255);
     SDL_RenderFillRect(renderer, &paddle);
     SDL_SetRenderDrawColor(renderer, 255, 249, 215, 255);
@@ -235,12 +245,11 @@ int main(int argc, char *argv[])
     SDL_Event event;
     srand(time(NULL));
     is_running = 1;
-    int lastTime = 0;
+    unsigned int ticks;
+    const int FPS = 30;
     if (argc == 2)
     {
-        char file_path[14 + 50] = "./custom_maps/";
-        strcat(file_path, argv[1]);
-        FILE *file = fopen(file_path, "r");
+        FILE *file = fopen(argv[1], "r");
         if (file == NULL)
         {
             defaultMapInit();
@@ -262,14 +271,15 @@ int main(int argc, char *argv[])
     resetGame();
     while (is_running != 0)
     {
+        ticks = SDL_GetTicks();
         while (SDL_PollEvent(&event))
             if (event.type == SDL_QUIT)
                 is_running = 0;
-        lastFrame = SDL_GetTicks64();
+        /*lastFrame = SDL_GetTicks64();
         if (lastFrame >= (lastTime + MAX_DELAY))
         {
             lastTime = lastFrame;
-        }
+        }*/
         prepare();
         input();
         draw();
@@ -278,6 +288,8 @@ int main(int argc, char *argv[])
             SDL_Delay(1000);
             resetGame();
         }
+        if (1000 / FPS > (SDL_GetTicks() - ticks))
+            SDL_Delay(1000 / FPS - (SDL_GetTicks() - ticks));
     }
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
