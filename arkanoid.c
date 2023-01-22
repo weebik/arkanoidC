@@ -24,7 +24,7 @@ SDL_Renderer *renderer;
 SDL_Window *window;
 SDL_Rect paddle, ball, brick;
 
-int frameCount, timerFPS, lastFrame, is_running, blocks_on;
+int frameCount, timerFPS, lastFrame, is_running, bricks_on;
 int bricks[MAX_ROW][MAX_COL];
 int map[MAX_ROW][MAX_COL];
 
@@ -32,7 +32,7 @@ float mvX, mvY;
 
 void resetGame(void)
 {
-    blocks_on = 0;
+    bricks_on = 0;
     paddle.w = PADDLE_WIDTH;
     paddle.h = PADDLE_HEIGHT;
     paddle.x = (SCREEN_WIDTH / 2) - (PADDLE_WIDTH / 2);
@@ -50,7 +50,7 @@ void resetGame(void)
         {
             bricks[i][j] = map[i][j];
             if (bricks[i][j])
-                blocks_on++;
+                bricks_on++;
         }
     }
     return;
@@ -177,7 +177,7 @@ void paddle_bounce(void)
     // https://gamedev.stackexchange.com/questions/4253/in-pong-how-do-you-calculate-the-balls-direction-when-it-bounces-off-the-paddl
 }
 
-void blockBounce(void)
+void brickBounce(void)
 {
     float slip = (BALL_DIAMETER / 2) / 2;
     if (mvX < 0 && ball.x > brick.x + brick.w - slip && ball.y < brick.y + brick.h && ball.y + ball.h > brick.y)
@@ -223,9 +223,9 @@ void prepare(void)
                 setBrickPos(i, j);
             if (SDL_HasIntersection(&ball, &brick) && bricks[i][j] == 1)
             {
-                blocks_on--;
+                bricks_on--;
                 bricks[i][j] = 0;
-                blockBounce();
+                brickBounce();
             }
         }
     }
@@ -312,7 +312,7 @@ int main(int argc, char *argv[])
         prepare();
         input();
         draw();
-        if (blocks_on == 0)
+        if (bricks_on == 0)
         {
             SDL_Delay(1000);
             resetGame();
