@@ -56,7 +56,7 @@ void resetGame(void)
     return;
 }
 
-void putBrick(int i, int j)
+void setBrickPos(int i, int j)
 {
     brick.x = (SCREEN_WIDTH - MAX_COL * brick.w - (MAX_COL - 1) * 10) / 2 + j * brick.w + j * 10;
     brick.y = 20 + i + i * brick.h + i * 10;
@@ -77,6 +77,14 @@ void defaultMapInit(void)
 void customMapInit(FILE *file)
 {
     int c, cnt = 0;
+    for (int i = 0; i < MAX_ROW; i++)
+    {
+        for (int j = 0; j < MAX_COL; j++)
+        {
+            bricks[i][j] = 0;
+            map[i][j] = 0;
+        }
+    }
     for (int i = 0; i <= MAX_ROW; i++)
     {
         if (i == MAX_ROW && c != EOF)
@@ -101,13 +109,17 @@ void customMapInit(FILE *file)
             }
             else
             {
-                if (c != '1' && c != '0' && c != '\n' && c != EOF)
+                if (c != '1' && c != '0')
                 {
+                    if (j == 0 && c == EOF)
+                        break;
                     fprintf(stderr, "Wrong file contents. Initializing default map.\n");
                     defaultMapInit();
                     return;
                 }
             }
+            if (c == EOF)
+                break;
             map[i][j] = c - '0';
             if (map[i][j] == 1)
                 cnt++;
@@ -124,22 +136,63 @@ void customMapInit(FILE *file)
 
 void paddle_bounce(void)
 {
-    float delta = 2;
+    float delta = 11;
     ball.y = paddle.y - BALL_DIAMETER;
     float relativeIntersectX = (paddle.x + (paddle.w / 2)) - (ball.x + (BALL_DIAMETER / 2));
     float normalizedRelativeIntersectX = relativeIntersectX / (paddle.w / 2);
-    float bounceAngle = normalizedRelativeIntersectX * (3.1415 / 4); // max angle
-    if (ball.x + (BALL_DIAMETER / 2) >= paddle.x + (PADDLE_WIDTH / 2) - delta && ball.x + (BALL_DIAMETER / 2) <= paddle.x + (PADDLE_WIDTH / 2) + delta)
+    float bounceAngle = normalizedRelativeIntersectX * (3.1415 / 4); // MAX ANGLE: 45 DEGREE
+    if (ball.x + (ball.w / 2) >= paddle.x + (paddle.w / 2) - delta && ball.x + (ball.w / 2) <= paddle.x + (PADDLE_WIDTH / 2) + delta)
     {
-        if (rand() % 2 == 0) // fixing verticle ball bounce loop
-            bounceAngle += 0.1;
+        if (mvX > 0)
+        {
+            mvX = BALL_SPEED * -sin(-0.1);
+            mvY = -BALL_SPEED * cos(-0.1);
+            return;
+        }
+        else if (mvX < 0)
+        {
+            mvX = BALL_SPEED * -sin(0.1);
+            mvY = -BALL_SPEED * cos(0.1);
+            return;
+        }
         else
-            bounceAngle -= 0.1;
+        {
+            if (rand() % 2 == 0)
+            {
+                mvX = BALL_SPEED * -sin(0.1);
+                mvY = -BALL_SPEED * cos(0.1);
+                return;
+            }
+            else
+            {
+                mvX = BALL_SPEED * -sin(0.1);
+                mvY = -BALL_SPEED * cos(0.1);
+                return;
+            }
+        }
     }
     mvX = BALL_SPEED * -sin(bounceAngle);
     mvY = -BALL_SPEED * cos(bounceAngle);
     return;
     // https://gamedev.stackexchange.com/questions/4253/in-pong-how-do-you-calculate-the-balls-direction-when-it-bounces-off-the-paddl
+}
+
+void blockBounce(void)
+{
+    float slip = (BALL_DIAMETER / 2) / 2;
+    if (mvX < 0 && ball.x > brick.x + brick.w - slip && ball.y < brick.y + brick.h && ball.y + ball.h > brick.y)
+        mvX = -mvX;
+    else if (mvX > 0 && ball.x + ball.w < brick.x + slip && ball.y < brick.y + brick.h && ball.y + ball.h > brick.y)
+        mvX = -mvX;
+    else if (mvY < 0 && ball.x + ball.w > brick.x && ball.x < brick.x + brick.w && ball.y > brick.y + brick.h - ball.h)
+        mvY = -mvY;
+    else if (mvY > 0 && ball.x + ball.w > brick.x && ball.x < brick.x + brick.w && ball.y + ball.h < brick.y + ball.h)
+        mvY = -mvY;
+    else
+    {
+        mvX = -mvX;
+        mvY = -mvY;
+    }
 }
 
 void prepare(void)
@@ -167,32 +220,12 @@ void prepare(void)
         for (int j = 0; j < MAX_COL; j++)
         {
             if (bricks[i][j])
-                putBrick(i, j);
+                setBrickPos(i, j);
             if (SDL_HasIntersection(&ball, &brick) && bricks[i][j] == 1)
             {
                 blocks_on--;
                 bricks[i][j] = 0;
-                if (ball.y + BALL_DIAMETER / 2 >= brick.y + brick.h || ball.y + BALL_DIAMETER / 2 <= brick.y)
-                {
-                    mvY = -mvY;
-                    return;
-                }
-                if (mvY < 0 && mvX > 0 && ball.y + (BALL_DIAMETER / 2) >= brick.y && ball.y <= brick.y + brick.h)
-                {
-                    mvX = -mvX;
-                }
-                else if (mvY < 0 && mvX < 0 && ball.y + (BALL_DIAMETER / 2) >= brick.y && ball.y <= brick.y + brick.h)
-                {
-                    mvX = -mvX;
-                }
-                else if (mvY > 0 && mvX > 0 && ball.y + (BALL_DIAMETER / 2) >= brick.y && ball.y <= brick.y + brick.h)
-                {
-                    mvX = -mvX;
-                }
-                else if (mvY > 0 && mvX < 0 && ball.y + (BALL_DIAMETER / 2) >= brick.y && ball.y <= brick.y + brick.h)
-                {
-                    mvX = -mvX;
-                }
+                blockBounce();
             }
         }
     }
@@ -228,7 +261,7 @@ void draw(void)
         {
             if (bricks[i][j])
             {
-                putBrick(i, j);
+                setBrickPos(i, j);
                 SDL_RenderFillRect(renderer, &brick);
             }
         }
