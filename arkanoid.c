@@ -60,6 +60,7 @@ void setBrickPos(int i, int j)
 {
     brick.x = (SCREEN_WIDTH - MAX_COL * brick.w - (MAX_COL - 1) * 10) / 2 + j * brick.w + j * 10;
     brick.y = 20 + i + i * brick.h + i * 10;
+    return;
 }
 
 void defaultMapInit(void)
@@ -193,6 +194,7 @@ void brickBounce(void)
         mvX = -mvX;
         mvY = -mvY;
     }
+    return;
 }
 
 void prepare(void)
