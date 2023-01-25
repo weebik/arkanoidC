@@ -182,13 +182,29 @@ void brickBounce(void)
 {
     float slip = (BALL_DIAMETER / 2) / 2;
     if (mvX < 0 && ball.x > brick.x + brick.w - slip && ball.y < brick.y + brick.h && ball.y + ball.h > brick.y)
+    {
+        ball.x = brick.x + brick.w;
         mvX = -mvX;
+    }
     else if (mvX > 0 && ball.x + ball.w < brick.x + slip && ball.y < brick.y + brick.h && ball.y + ball.h > brick.y)
+    {
+        ball.x = brick.x - ball.w;
         mvX = -mvX;
+    }
     else if (mvY < 0 && ball.x + ball.w > brick.x && ball.x < brick.x + brick.w && ball.y > brick.y + brick.h - ball.h)
+    {
+        ball.y = brick.y + brick.h;
         mvY = -mvY;
+    }
     else if (mvY > 0 && ball.x + ball.w > brick.x && ball.x < brick.x + brick.w && ball.y + ball.h < brick.y + ball.h)
+    {
+        ball.y = brick.y - ball.h;
         mvY = -mvY;
+    }
+    else if ((mvY < 0 && ball.y + ball.h <= brick.y+brick.h/2)||(mvY > 0 && ball.y >= brick.y+brick.h/2))
+    {
+        mvX = -mvX;
+    }
     else
     {
         mvX = -mvX;
@@ -205,7 +221,7 @@ void prepare(void)
         paddle.x = 0;
     if (paddle.x + paddle.w >= SCREEN_WIDTH)
         paddle.x = SCREEN_WIDTH - PADDLE_WIDTH;
-    if (ball.x <= 0 || ball.x + BALL_DIAMETER > SCREEN_WIDTH)
+    if (ball.x <= 0 || ball.x + BALL_DIAMETER >= SCREEN_WIDTH)
         mvX = -mvX;
     if (ball.y <= 0)
     {
@@ -214,6 +230,7 @@ void prepare(void)
     }
     if (ball.y + BALL_DIAMETER / 2 >= PADDLE_Y)
         resetGame();
+
     ball.x += mvX;
     ball.y += mvY;
 
@@ -281,8 +298,6 @@ int main(int argc, char *argv[])
     SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "linear");
     SDL_Event event;
     srand(time(NULL));
-    is_running = 1;
-    unsigned int ticks;
     if (argc == 2)
     {
         FILE *file = fopen(argv[1], "r");
@@ -305,6 +320,8 @@ int main(int argc, char *argv[])
     else
         defaultMapInit();
     resetGame();
+    is_running = 1;
+    unsigned int ticks;
     while (is_running != 0)
     {
         ticks = SDL_GetTicks();
