@@ -4,6 +4,7 @@
 #include <string.h>
 #include <time.h>
 #include <SDL2/SDL.h>
+#include <SDL2/SDL_ttf.h>
 
 #define SCREEN_WIDTH 1000
 #define SCREEN_HEIGHT 875
@@ -20,11 +21,16 @@
 #define BRICK_HEIGHT 40
 #define FPS 30
 
+SDL_Color fontColor = {205, 102, 77};
+SDL_Event event;
 SDL_Renderer *renderer;
+SDL_Rect paddle, ball, brick, field;
+SDL_Surface *message;
+SDL_Texture *messageTexture;
 SDL_Window *window;
-SDL_Rect paddle, ball, brick;
+TTF_Font *Font;
 
-int frameCount, timerFPS, lastFrame, is_running, bricks_on;
+int frameCount, timerFPS, lastFrame, is_running, bricks_on, afterReset, nightMode;
 int bricks[MAX_ROW][MAX_COL];
 int map[MAX_ROW][MAX_COL];
 
@@ -53,6 +59,7 @@ void resetGame(void)
                 bricks_on++;
         }
     }
+    afterReset = 1;
     return;
 }
 
@@ -201,7 +208,7 @@ void brickBounce(void)
         ball.y = brick.y - ball.h;
         mvY = -mvY;
     }
-    else if ((mvY < 0 && ball.y + ball.h <= brick.y+brick.h/2)||(mvY > 0 && ball.y >= brick.y+brick.h/2))
+    else if ((mvY < 0 && ball.y + ball.h <= brick.y + brick.h / 2) || (mvY > 0 && ball.y >= brick.y + brick.h / 2))
     {
         mvX = -mvX;
     }
@@ -260,6 +267,11 @@ void input(void)
         paddle.x -= PADDLE_SPEED;
     if (input[SDL_SCANCODE_R])
         resetGame();
+    if (input[SDL_SCANCODE_E])
+    {
+        nightMode = -nightMode;
+        SDL_Delay(200);
+    }
     if (input[SDL_SCANCODE_Q])
         is_running = 0;
     return;
@@ -267,13 +279,28 @@ void input(void)
 
 void draw(void)
 {
-    SDL_SetRenderDrawColor(renderer, 40, 2, 30, 255);
-    SDL_RenderClear(renderer);
-    SDL_SetRenderDrawColor(renderer, 238, 129, 179, 255);
-    SDL_RenderFillRect(renderer, &paddle);
-    SDL_SetRenderDrawColor(renderer, 255, 249, 215, 255);
-    SDL_RenderFillRect(renderer, &ball);
-    SDL_SetRenderDrawColor(renderer, 129, 9, 85, 255);
+    if (nightMode < 1)
+    {
+        SDL_SetRenderDrawColor(renderer, 205, 200, 176, 255);
+        SDL_RenderClear(renderer);
+        SDL_SetRenderDrawColor(renderer, 153, 152, 131, 255);
+        SDL_RenderFillRect(renderer, &paddle);
+        SDL_RenderDrawLineF(renderer, 0, paddle.y + (paddle.h / 2), SCREEN_WIDTH, paddle.y + (paddle.h / 2));
+        SDL_SetRenderDrawColor(renderer, 205, 102, 77, 255);
+        SDL_RenderFillRect(renderer, &ball);
+        SDL_SetRenderDrawColor(renderer, 87, 84, 74, 255);
+    }
+    else
+    {
+        SDL_SetRenderDrawColor(renderer, 15, 13, 12, 255);
+        SDL_RenderClear(renderer);
+        SDL_SetRenderDrawColor(renderer, 82, 67, 58, 255);
+        SDL_RenderFillRect(renderer, &paddle);
+        SDL_RenderDrawLineF(renderer, 0, paddle.y + (paddle.h / 2), SCREEN_WIDTH, paddle.y + (paddle.h / 2));
+        SDL_SetRenderDrawColor(renderer, 205, 102, 77, 255);
+        SDL_RenderFillRect(renderer, &ball);
+        SDL_SetRenderDrawColor(renderer, 61, 48, 42, 255);
+    }
     for (int i = 0; i < MAX_ROW; i++)
     {
         for (int j = 0; j < MAX_COL; j++)
@@ -289,14 +316,75 @@ void draw(void)
     return;
 }
 
+void afterResetAwait()
+{
+    message = TTF_RenderText_Solid(Font, "[Press any key to start]", fontColor);
+    if (message == NULL)
+    {
+        fprintf(stderr, "Failed at creating message.\n");
+        is_running = 0;
+        return;
+    }
+    messageTexture = SDL_CreateTextureFromSurface(renderer, message);
+    if (messageTexture == NULL)
+    {
+        fprintf(stderr, "Failed at creating texture.\n");
+        is_running = 0;
+        return;
+    }
+    int texW = 0;
+    int texH = 0;
+    if (afterReset)
+    {
+        int quit = 1;
+        SDL_QueryTexture(messageTexture, NULL, NULL, &texW, &texH);
+        SDL_Rect dstrect = {SCREEN_WIDTH/2 - message->w/2, ball.y - 100, texW, texH};
+        SDL_RenderCopy(renderer, messageTexture, NULL, &dstrect);
+        SDL_RenderPresent(renderer);
+        while (quit)
+        {
+            if (SDL_WaitEvent(&event))
+            {
+                if (event.type == SDL_QUIT)
+                    is_running = 0;
+                else if (event.type == SDL_KEYDOWN)
+                {
+                    quit = 0;
+                    afterReset = 0;
+                }
+            }
+        }
+        SDL_Delay(200);
+        return;
+    }
+    else
+        return;
+}
+
 int main(int argc, char *argv[])
 {
     if (SDL_Init(SDL_INIT_EVERYTHING) < 0)
+    {
         fprintf(stderr, "Failed Initialization\n");
+        return 0;
+    }
     if (SDL_CreateWindowAndRenderer(SCREEN_WIDTH, SCREEN_HEIGHT, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC, &window, &renderer) < 0)
+    {
         fprintf(stderr, "Failed at Creating Window\n");
+        return 0;
+    }
+    if (TTF_Init() < 0)
+    {
+        fprintf(stderr, "Failed at initializing font.\n");
+        return 0;
+    }
+    Font = TTF_OpenFont("./include/Retro_Gaming.ttf", 30);
+    if (Font == NULL)
+    {
+        fprintf(stderr, "Failed at opening font.\n");
+        return 0;
+    }
     SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "linear");
-    SDL_Event event;
     srand(time(NULL));
     if (argc == 2)
     {
@@ -321,6 +409,7 @@ int main(int argc, char *argv[])
         defaultMapInit();
     resetGame();
     is_running = 1;
+    nightMode = -1;
     unsigned int ticks;
     while (is_running != 0)
     {
@@ -331,16 +420,22 @@ int main(int argc, char *argv[])
         prepare();
         input();
         draw();
+        afterResetAwait();
         if (bricks_on == 0)
         {
             SDL_Delay(1000);
             resetGame();
+            SDL_Delay(1000);
         }
         if (1000 / FPS > (SDL_GetTicks() - ticks))
             SDL_Delay(1000 / FPS - (SDL_GetTicks() - ticks));
     }
+    SDL_DestroyTexture(messageTexture);
+    SDL_FreeSurface(message);
+    TTF_CloseFont(Font);
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
+    TTF_Quit();
     SDL_Quit();
     return 0;
 }

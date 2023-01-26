@@ -1,10 +1,12 @@
 # arkanoidC
+### Cel gry
+> Celem gry jest stracenie wszystkich cegielek nie pozwalajac pilce spasc na ziemie. Gra zacznie sie po nacisnieciu dowolnego klawisza na klawiaturze. Po wygranej poziom uruchomi sie na nowo.
 ### Klawiszologia
 > <kbd>A</kbd> lub <kbd>🢀</kbd> &rarr; Ruch w lewo</br>
 > <kbd>D</kbd> lub <kbd>🢂</kbd> &rarr; Ruch w prawo</br>
 > <kbd>R</kbd> &rarr; Reset</br>
+> <kbd>E</kbd> &rarr; Ciemny Motyw</br>
 > <kbd>Q</kbd> &rarr; Wyjscie</br>
-
 ### Kompilacja i uruchomienie
 > **Upewnij sie ze masz zainstalowane SDL2**</br>
 >`sudo apt-get install libsdl2-dev`</br>
