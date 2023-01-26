@@ -30,7 +30,7 @@ SDL_Texture *messageTexture;
 SDL_Window *window;
 TTF_Font *Font;
 
-int frameCount, timerFPS, lastFrame, is_running, bricks_on, afterReset, nightMode, firstLaunch = 1;
+int is_running, bricks_on, afterReset, nightMode, firstLaunch = 1;
 int bricks[MAX_ROW][MAX_COL];
 int map[MAX_ROW][MAX_COL];
 
