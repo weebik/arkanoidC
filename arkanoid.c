@@ -30,7 +30,7 @@ SDL_Texture *messageTexture;
 SDL_Window *window;
 TTF_Font *Font;
 
-int frameCount, timerFPS, lastFrame, is_running, bricks_on, afterReset, nightMode;
+int frameCount, timerFPS, lastFrame, is_running, bricks_on, afterReset, nightMode, firstLaunch = 1;
 int bricks[MAX_ROW][MAX_COL];
 int map[MAX_ROW][MAX_COL];
 
@@ -60,6 +60,43 @@ void resetGame(void)
         }
     }
     afterReset = 1;
+    return;
+}
+
+void endScreen(void)
+{
+    SDL_SetRenderDrawColor(renderer, 15, 13, 12, 255);
+    SDL_RenderClear(renderer);
+    TTF_SetFontSize(Font, 100);
+    if (bricks_on == 0)
+        message = TTF_RenderText_Solid(Font, "[!YOU WIN!]", fontColor);
+    else
+        message = TTF_RenderText_Solid(Font, "[YOU LOSE]", fontColor);
+    if (message == NULL)
+    {
+        fprintf(stderr, "Failed at creating message.\n");
+        is_running = 0;
+        return;
+    }
+    messageTexture = SDL_CreateTextureFromSurface(renderer, message);
+    if (messageTexture == NULL)
+    {
+        fprintf(stderr, "Failed at creating texture.\n");
+        is_running = 0;
+        return;
+    }
+    int texW2 = 0;
+    int texH2 = 0;
+    if (SDL_QueryTexture(messageTexture, NULL, NULL, &texW2, &texH2) < 0)
+        fprintf(stderr, "Failed at setting attributes to texture.\n");
+    SDL_Rect dstrect2 = {SCREEN_WIDTH / 2 - message->w / 2, SCREEN_HEIGHT / 2 - message->h / 2, texW2, texH2};
+    if (SDL_RenderCopy(renderer, messageTexture, NULL, &dstrect2) < 0)
+        fprintf(stderr, "Failed at setting texture to current rendering.\n");
+    SDL_RenderPresent(renderer);
+    SDL_Delay(2000);
+    SDL_FreeSurface(message);
+    SDL_DestroyTexture(messageTexture);
+    resetGame();
     return;
 }
 
@@ -236,7 +273,7 @@ void prepare(void)
         mvY = -mvY;
     }
     if (ball.y + BALL_DIAMETER / 2 >= PADDLE_Y)
-        resetGame();
+        endScreen();
 
     ball.x += mvX;
     ball.y += mvY;
@@ -316,8 +353,9 @@ void draw(void)
     return;
 }
 
-void afterResetAwait()
+void afterResetAwait(void)
 {
+    TTF_SetFontSize(Font, 30);
     message = TTF_RenderText_Solid(Font, "[Press any key to start]", fontColor);
     if (message == NULL)
     {
@@ -334,31 +372,32 @@ void afterResetAwait()
     }
     int texW = 0;
     int texH = 0;
-    if (afterReset)
+    if (SDL_QueryTexture(messageTexture, NULL, NULL, &texW, &texH) < 0)
+        fprintf(stderr, "Failed at setting attributes to texture.\n");
+    SDL_Rect dstrect = {SCREEN_WIDTH / 2 - message->w / 2, ball.y - 100, texW, texH};
+    if (SDL_RenderCopy(renderer, messageTexture, NULL, &dstrect) < 0)
+        fprintf(stderr, "Failed at setting texture to current rendering.\n");
+    SDL_RenderPresent(renderer);
+    while(1)
     {
-        int quit = 1;
-        SDL_QueryTexture(messageTexture, NULL, NULL, &texW, &texH);
-        SDL_Rect dstrect = {SCREEN_WIDTH/2 - message->w/2, ball.y - 100, texW, texH};
-        SDL_RenderCopy(renderer, messageTexture, NULL, &dstrect);
-        SDL_RenderPresent(renderer);
-        while (quit)
+        if (SDL_WaitEvent(&event))
         {
-            if (SDL_WaitEvent(&event))
+            if (event.type == SDL_QUIT)
             {
-                if (event.type == SDL_QUIT)
-                    is_running = 0;
-                else if (event.type == SDL_KEYDOWN)
-                {
-                    quit = 0;
-                    afterReset = 0;
-                }
+                is_running = 0;
+                return;
+            }
+            else if (event.type == SDL_KEYDOWN)
+            {
+                afterReset = 0;
+                break;
             }
         }
-        SDL_Delay(200);
-        return;
     }
-    else
-        return;
+    SDL_Delay(200);
+    SDL_DestroyTexture(messageTexture);
+    SDL_FreeSurface(message);
+    return;
 }
 
 int main(int argc, char *argv[])
@@ -384,7 +423,8 @@ int main(int argc, char *argv[])
         fprintf(stderr, "Failed at opening font.\n");
         return 0;
     }
-    SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "linear");
+    if (!SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "linear"))
+        fprintf(stderr, "SetHint did not work properly.\n");
     srand(time(NULL));
     if (argc == 2)
     {
@@ -420,18 +460,16 @@ int main(int argc, char *argv[])
         prepare();
         input();
         draw();
-        afterResetAwait();
+        if (afterReset)
+            afterResetAwait();
         if (bricks_on == 0)
         {
-            SDL_Delay(1000);
-            resetGame();
-            SDL_Delay(1000);
+            SDL_Delay(500);
+            endScreen();
         }
         if (1000 / FPS > (SDL_GetTicks() - ticks))
             SDL_Delay(1000 / FPS - (SDL_GetTicks() - ticks));
     }
-    SDL_DestroyTexture(messageTexture);
-    SDL_FreeSurface(message);
     TTF_CloseFont(Font);
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
