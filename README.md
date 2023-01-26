@@ -10,6 +10,7 @@
 ### Kompilacja i uruchomienie
 > **Upewnij sie ze masz zainstalowane SDL2**</br>
 >`sudo apt-get install libsdl2-dev`</br>
+>`sudo apt-get install libsdl2-ttf-dev`</br>
 > Kompilacja:</br>
 > `./build.sh`</br>
 > Nastepnie:</br>
