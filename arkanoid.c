@@ -4,6 +4,7 @@
 #include <string.h>
 #include <time.h>
 #include <SDL2/SDL.h>
+#include <SDL2/SDL_ttf.h>
 
 #define SCREEN_WIDTH 1000
 #define SCREEN_HEIGHT 875
@@ -13,17 +14,23 @@
 #define PADDLE_HEIGHT 20
 #define PADDLE_SPEED 15
 #define PADDLE_Y 800
-#define BALL_DIAMETER 25
+#define BALL_DIAMETER 20
 #define BALL_SPEED 15
 #define MAX_ROW 9
 #define MAX_COL 14
-#define BRICK_HEIGHT 20
+#define BRICK_HEIGHT 40
+#define FPS 30
 
+SDL_Color fontColor = {205, 102, 77};
+SDL_Event event;
 SDL_Renderer *renderer;
+SDL_Rect paddle, ball, brick, field;
+SDL_Surface *message;
+SDL_Texture *messageTexture;
 SDL_Window *window;
-SDL_Rect paddle, ball, brick;
+TTF_Font *Font;
 
-int frameCount, timerFPS, lastFrame, is_running, blocks_on;
+int frameCount, timerFPS, lastFrame, is_running, bricks_on, afterReset, nightMode, firstLaunch = 1;
 int bricks[MAX_ROW][MAX_COL];
 int map[MAX_ROW][MAX_COL];
 
@@ -31,7 +38,7 @@ float mvX, mvY;
 
 void resetGame(void)
 {
-    blocks_on = 0;
+    bricks_on = 0;
     paddle.w = PADDLE_WIDTH;
     paddle.h = PADDLE_HEIGHT;
     paddle.x = (SCREEN_WIDTH / 2) - (PADDLE_WIDTH / 2);
@@ -49,16 +56,55 @@ void resetGame(void)
         {
             bricks[i][j] = map[i][j];
             if (bricks[i][j])
-                blocks_on++;
+                bricks_on++;
         }
     }
+    afterReset = 1;
     return;
 }
 
-void putBrick(int i, int j)
+void endScreen(void)
+{
+    SDL_SetRenderDrawColor(renderer, 15, 13, 12, 255);
+    SDL_RenderClear(renderer);
+    TTF_SetFontSize(Font, 100);
+    if (bricks_on == 0)
+        message = TTF_RenderText_Solid(Font, "[!YOU WIN!]", fontColor);
+    else
+        message = TTF_RenderText_Solid(Font, "[YOU LOSE]", fontColor);
+    if (message == NULL)
+    {
+        fprintf(stderr, "Failed at creating message.\n");
+        is_running = 0;
+        return;
+    }
+    messageTexture = SDL_CreateTextureFromSurface(renderer, message);
+    if (messageTexture == NULL)
+    {
+        fprintf(stderr, "Failed at creating texture.\n");
+        is_running = 0;
+        return;
+    }
+    int texW2 = 0;
+    int texH2 = 0;
+    if (SDL_QueryTexture(messageTexture, NULL, NULL, &texW2, &texH2) < 0)
+        fprintf(stderr, "Failed at setting attributes to texture.\n");
+    SDL_Rect dstrect2 = {SCREEN_WIDTH / 2 - message->w / 2, SCREEN_HEIGHT / 2 - message->h / 2, texW2, texH2};
+    if (SDL_RenderCopy(renderer, messageTexture, NULL, &dstrect2) < 0)
+        fprintf(stderr, "Failed at setting texture to current rendering.\n");
+    SDL_RenderPresent(renderer);
+    SDL_Delay(2000);
+    SDL_FreeSurface(message);
+    SDL_DestroyTexture(messageTexture);
+    resetGame();
+    return;
+}
+
+void setBrickPos(int i, int j)
 {
     brick.x = (SCREEN_WIDTH - MAX_COL * brick.w - (MAX_COL - 1) * 10) / 2 + j * brick.w + j * 10;
     brick.y = 20 + i + i * brick.h + i * 10;
+    return;
 }
 
 void defaultMapInit(void)
@@ -75,10 +121,23 @@ void defaultMapInit(void)
 
 void customMapInit(FILE *file)
 {
-    int row = 0, col = 0;
-    int c;
+    int c, cnt = 0;
+    for (int i = 0; i < MAX_ROW; i++)
+    {
+        for (int j = 0; j < MAX_COL; j++)
+        {
+            bricks[i][j] = 0;
+            map[i][j] = 0;
+        }
+    }
     for (int i = 0; i <= MAX_ROW; i++)
     {
+        if (i == MAX_ROW && c != EOF)
+        {
+            fprintf(stderr, "Wrong file contents. Initializing default map.\n");
+            defaultMapInit();
+            return;
+        }
         for (int j = 0; j <= MAX_COL; j++)
         {
             c = getc(file);
@@ -95,41 +154,107 @@ void customMapInit(FILE *file)
             }
             else
             {
-                if (c != '1' && c != '0' && c != '\n' && c != EOF)
+                if (c != '1' && c != '0')
                 {
+                    if (j == 0 && c == EOF)
+                        break;
                     fprintf(stderr, "Wrong file contents. Initializing default map.\n");
                     defaultMapInit();
                     return;
                 }
             }
+            if (c == EOF)
+                break;
             map[i][j] = c - '0';
+            if (map[i][j] == 1)
+                cnt++;
         }
     }
+    if (cnt == 0)
+    {
+        fprintf(stderr, "Wrong file contents. Initializing default map.\n");
+        defaultMapInit();
+        return;
+    }
+    return;
 }
 
 void paddle_bounce(void)
 {
+    float delta = 11;
+    ball.y = paddle.y - BALL_DIAMETER;
     float relativeIntersectX = (paddle.x + (paddle.w / 2)) - (ball.x + (BALL_DIAMETER / 2));
     float normalizedRelativeIntersectX = relativeIntersectX / (paddle.w / 2);
-    float bounceAngle = normalizedRelativeIntersectX * (5 * 3.1415 / 20); // max angle
-    if (fabs(bounceAngle) < 0.1)
+    float bounceAngle = normalizedRelativeIntersectX * (3.1415 / 4); // MAX ANGLE: 45 DEGREE
+    if (ball.x + (ball.w / 2) >= paddle.x + (paddle.w / 2) - delta && ball.x + (ball.w / 2) <= paddle.x + (PADDLE_WIDTH / 2) + delta)
     {
-        if (bounceAngle > 0)
-            bounceAngle += 0.1;
-        else if (bounceAngle < 0)
-            bounceAngle -= 0.1;
+        if (mvX > 0)
+        {
+            mvX = BALL_SPEED * -sin(-0.1);
+            mvY = -BALL_SPEED * cos(-0.1);
+            return;
+        }
+        else if (mvX < 0)
+        {
+            mvX = BALL_SPEED * -sin(0.1);
+            mvY = -BALL_SPEED * cos(0.1);
+            return;
+        }
         else
         {
             if (rand() % 2 == 0)
-                bounceAngle += 0.1;
+            {
+                mvX = BALL_SPEED * -sin(0.1);
+                mvY = -BALL_SPEED * cos(0.1);
+                return;
+            }
             else
-                bounceAngle -= 0.1;
+            {
+                mvX = BALL_SPEED * -sin(0.1);
+                mvY = -BALL_SPEED * cos(0.1);
+                return;
+            }
         }
     }
     mvX = BALL_SPEED * -sin(bounceAngle);
     mvY = -BALL_SPEED * cos(bounceAngle);
     return;
     // https://gamedev.stackexchange.com/questions/4253/in-pong-how-do-you-calculate-the-balls-direction-when-it-bounces-off-the-paddl
+}
+
+void brickBounce(void)
+{
+    float slip = (BALL_DIAMETER / 2) / 2;
+    if (mvX < 0 && ball.x > brick.x + brick.w - slip && ball.y < brick.y + brick.h && ball.y + ball.h > brick.y)
+    {
+        ball.x = brick.x + brick.w;
+        mvX = -mvX;
+    }
+    else if (mvX > 0 && ball.x + ball.w < brick.x + slip && ball.y < brick.y + brick.h && ball.y + ball.h > brick.y)
+    {
+        ball.x = brick.x - ball.w;
+        mvX = -mvX;
+    }
+    else if (mvY < 0 && ball.x + ball.w > brick.x && ball.x < brick.x + brick.w && ball.y > brick.y + brick.h - ball.h)
+    {
+        ball.y = brick.y + brick.h;
+        mvY = -mvY;
+    }
+    else if (mvY > 0 && ball.x + ball.w > brick.x && ball.x < brick.x + brick.w && ball.y + ball.h < brick.y + ball.h)
+    {
+        ball.y = brick.y - ball.h;
+        mvY = -mvY;
+    }
+    else if ((mvY < 0 && ball.y + ball.h <= brick.y + brick.h / 2) || (mvY > 0 && ball.y >= brick.y + brick.h / 2))
+    {
+        mvX = -mvX;
+    }
+    else
+    {
+        mvX = -mvX;
+        mvY = -mvY;
+    }
+    return;
 }
 
 void prepare(void)
@@ -140,15 +265,15 @@ void prepare(void)
         paddle.x = 0;
     if (paddle.x + paddle.w >= SCREEN_WIDTH)
         paddle.x = SCREEN_WIDTH - PADDLE_WIDTH;
-    if (ball.x <= 0 || ball.x + BALL_DIAMETER > SCREEN_WIDTH)
+    if (ball.x <= 0 || ball.x + BALL_DIAMETER >= SCREEN_WIDTH)
         mvX = -mvX;
     if (ball.y <= 0)
     {
         ball.y = 0;
         mvY = -mvY;
     }
-    if (ball.y + BALL_DIAMETER / 2 >= PADDLE_Y + PADDLE_HEIGHT / 2)
-        resetGame();
+    if (ball.y + BALL_DIAMETER / 2 >= PADDLE_Y)
+        endScreen();
 
     ball.x += mvX;
     ball.y += mvY;
@@ -158,20 +283,12 @@ void prepare(void)
         for (int j = 0; j < MAX_COL; j++)
         {
             if (bricks[i][j])
-                putBrick(i, j);
+                setBrickPos(i, j);
             if (SDL_HasIntersection(&ball, &brick) && bricks[i][j] == 1)
             {
-                blocks_on--;
+                bricks_on--;
                 bricks[i][j] = 0;
-                mvY = -mvY;
-                if (ball.y <= brick.y)
-                {
-                    ball.y = ball.y - 20;
-                }
-                if (ball.y >= brick.y)
-                {
-                    ball.y = ball.y + 20;
-                }
+                brickBounce();
             }
         }
     }
@@ -187,36 +304,47 @@ void input(void)
         paddle.x -= PADDLE_SPEED;
     if (input[SDL_SCANCODE_R])
         resetGame();
+    if (input[SDL_SCANCODE_E])
+    {
+        nightMode = -nightMode;
+        SDL_Delay(200);
+    }
     if (input[SDL_SCANCODE_Q])
         is_running = 0;
     return;
 }
 
-void optimizeFrames(void)
-{
-    timerFPS = SDL_GetTicks64() - lastFrame;
-    if (timerFPS < (MAX_DELAY / MAX_FPS))
-        SDL_Delay((MAX_DELAY / MAX_FPS) - timerFPS);
-    return;
-}
-
 void draw(void)
 {
-    SDL_SetRenderDrawColor(renderer, 40, 2, 30, 255);
-    SDL_RenderClear(renderer);
-    optimizeFrames();
-    SDL_SetRenderDrawColor(renderer, 238, 129, 179, 255);
-    SDL_RenderFillRect(renderer, &paddle);
-    SDL_SetRenderDrawColor(renderer, 255, 249, 215, 255);
-    SDL_RenderFillRect(renderer, &ball);
-    SDL_SetRenderDrawColor(renderer, 129, 9, 85, 255);
+    if (nightMode < 1)
+    {
+        SDL_SetRenderDrawColor(renderer, 205, 200, 176, 255);
+        SDL_RenderClear(renderer);
+        SDL_SetRenderDrawColor(renderer, 153, 152, 131, 255);
+        SDL_RenderFillRect(renderer, &paddle);
+        SDL_RenderDrawLineF(renderer, 0, paddle.y + (paddle.h / 2), SCREEN_WIDTH, paddle.y + (paddle.h / 2));
+        SDL_SetRenderDrawColor(renderer, 205, 102, 77, 255);
+        SDL_RenderFillRect(renderer, &ball);
+        SDL_SetRenderDrawColor(renderer, 87, 84, 74, 255);
+    }
+    else
+    {
+        SDL_SetRenderDrawColor(renderer, 15, 13, 12, 255);
+        SDL_RenderClear(renderer);
+        SDL_SetRenderDrawColor(renderer, 82, 67, 58, 255);
+        SDL_RenderFillRect(renderer, &paddle);
+        SDL_RenderDrawLineF(renderer, 0, paddle.y + (paddle.h / 2), SCREEN_WIDTH, paddle.y + (paddle.h / 2));
+        SDL_SetRenderDrawColor(renderer, 205, 102, 77, 255);
+        SDL_RenderFillRect(renderer, &ball);
+        SDL_SetRenderDrawColor(renderer, 61, 48, 42, 255);
+    }
     for (int i = 0; i < MAX_ROW; i++)
     {
         for (int j = 0; j < MAX_COL; j++)
         {
             if (bricks[i][j])
             {
-                putBrick(i, j);
+                setBrickPos(i, j);
                 SDL_RenderFillRect(renderer, &brick);
             }
         }
@@ -225,22 +353,82 @@ void draw(void)
     return;
 }
 
+void afterResetAwait(void)
+{
+    TTF_SetFontSize(Font, 30);
+    message = TTF_RenderText_Solid(Font, "[Press any key to start]", fontColor);
+    if (message == NULL)
+    {
+        fprintf(stderr, "Failed at creating message.\n");
+        is_running = 0;
+        return;
+    }
+    messageTexture = SDL_CreateTextureFromSurface(renderer, message);
+    if (messageTexture == NULL)
+    {
+        fprintf(stderr, "Failed at creating texture.\n");
+        is_running = 0;
+        return;
+    }
+    int texW = 0;
+    int texH = 0;
+    if (SDL_QueryTexture(messageTexture, NULL, NULL, &texW, &texH) < 0)
+        fprintf(stderr, "Failed at setting attributes to texture.\n");
+    SDL_Rect dstrect = {SCREEN_WIDTH / 2 - message->w / 2, ball.y - 100, texW, texH};
+    if (SDL_RenderCopy(renderer, messageTexture, NULL, &dstrect) < 0)
+        fprintf(stderr, "Failed at setting texture to current rendering.\n");
+    SDL_RenderPresent(renderer);
+    while(1)
+    {
+        if (SDL_WaitEvent(&event))
+        {
+            if (event.type == SDL_QUIT)
+            {
+                is_running = 0;
+                return;
+            }
+            else if (event.type == SDL_KEYDOWN)
+            {
+                afterReset = 0;
+                break;
+            }
+        }
+    }
+    SDL_Delay(200);
+    SDL_DestroyTexture(messageTexture);
+    SDL_FreeSurface(message);
+    return;
+}
+
 int main(int argc, char *argv[])
 {
     if (SDL_Init(SDL_INIT_EVERYTHING) < 0)
+    {
         fprintf(stderr, "Failed Initialization\n");
+        return 0;
+    }
     if (SDL_CreateWindowAndRenderer(SCREEN_WIDTH, SCREEN_HEIGHT, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC, &window, &renderer) < 0)
+    {
         fprintf(stderr, "Failed at Creating Window\n");
-    SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "linear");
-    SDL_Event event;
+        return 0;
+    }
+    if (TTF_Init() < 0)
+    {
+        fprintf(stderr, "Failed at initializing font.\n");
+        return 0;
+    }
+    Font = TTF_OpenFont("./include/Retro_Gaming.ttf", 30);
+    if (Font == NULL)
+    {
+        fprintf(stderr, "Failed at opening font.\n");
+        return 0;
+    }
+    if (!SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "linear"))
+        fprintf(stderr, "SetHint did not work properly.\n");
     srand(time(NULL));
-    is_running = 1;
-    int lastTime = 0;
     if (argc == 2)
     {
-        char file_path[14 + 50] = "./custom_maps/";
-        strcat(file_path, argv[1]);
-        FILE *file = fopen(file_path, "r");
+        FILE *file = fopen(argv[1], "r");
         if (file == NULL)
         {
             defaultMapInit();
@@ -260,27 +448,32 @@ int main(int argc, char *argv[])
     else
         defaultMapInit();
     resetGame();
+    is_running = 1;
+    nightMode = -1;
+    unsigned int ticks;
     while (is_running != 0)
     {
+        ticks = SDL_GetTicks();
         while (SDL_PollEvent(&event))
             if (event.type == SDL_QUIT)
                 is_running = 0;
-        lastFrame = SDL_GetTicks64();
-        if (lastFrame >= (lastTime + MAX_DELAY))
-        {
-            lastTime = lastFrame;
-        }
         prepare();
         input();
         draw();
-        if (blocks_on == 0)
+        if (afterReset)
+            afterResetAwait();
+        if (bricks_on == 0)
         {
-            SDL_Delay(1000);
-            resetGame();
+            SDL_Delay(500);
+            endScreen();
         }
+        if (1000 / FPS > (SDL_GetTicks() - ticks))
+            SDL_Delay(1000 / FPS - (SDL_GetTicks() - ticks));
     }
+    TTF_CloseFont(Font);
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
+    TTF_Quit();
     SDL_Quit();
     return 0;
 }
