@@ -347,7 +347,9 @@ void draw(void)
                 if (nightMode < 1)
                 {
                     if (bricks[i][j] == 4)
+                    {
                         SDL_SetRenderDrawColor(renderer, 136, 124, 101, 255);
+                    }
                     else if (bricks[i][j] == 3)
                         SDL_SetRenderDrawColor(renderer, 187, 155, 129, 255);
                     else if (bricks[i][j] == 2)
@@ -358,7 +360,9 @@ void draw(void)
                 else
                 {
                     if (bricks[i][j] == 4)
+                    {
                         SDL_SetRenderDrawColor(renderer, 35, 36, 31, 255);
+                    }
                     else if (bricks[i][j] == 3)
                         SDL_SetRenderDrawColor(renderer, 62, 60, 50, 255);
                     else if (bricks[i][j] == 2)
@@ -367,6 +371,15 @@ void draw(void)
                         SDL_SetRenderDrawColor(renderer, 118, 98, 87, 255);
                 }
                 SDL_RenderFillRect(renderer, &brick);
+                if (bricks[i][j] == 4)
+                {
+                    if (nightMode < 1)
+                        SDL_SetRenderDrawColor(renderer, 199, 193, 172, 255);
+                    else
+                        SDL_SetRenderDrawColor(renderer, 81, 74, 63, 255);
+                    SDL_RenderDrawLineF(renderer, brick.x, brick.y, brick.x + brick.w, brick.y + brick.h);
+                    SDL_RenderDrawLineF(renderer, brick.x, brick.y + brick.h, brick.x + brick.w, brick.y);
+                }
             }
         }
     }
