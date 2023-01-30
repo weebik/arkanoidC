@@ -316,8 +316,11 @@ void prepare(void)
                     {
                         Mix_PlayChannel(-1, brickDestroyed_sound, 0);
                     }
+                    else
+                    {
+                        Mix_PlayChannel(-1, brickBounce_sound, 0);
+                    }
                 }
-                Mix_PlayChannel(-1, brickBounce_sound, 0);
                 brickBounce();
             }
         }
