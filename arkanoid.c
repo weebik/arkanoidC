@@ -165,7 +165,7 @@ void customMapInit(FILE *file)
             if (c == EOF)
                 break;
             map[i][j] = c - '0';
-            if (map[i][j] == 1)
+            if (map[i][j] < 4 && map[i][j] > 0)
                 cnt++;
         }
     }
