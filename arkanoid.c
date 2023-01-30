@@ -348,7 +348,7 @@ void draw(void)
                     else if (bricks[i][j] == 3)
                         SDL_SetRenderDrawColor(renderer, 187, 155, 129, 255);
                     else if (bricks[i][j] == 2)
-                        SDL_SetRenderDrawColor(renderer, 188, 175, 145, 255);
+                        SDL_SetRenderDrawColor(renderer, 169, 161, 130, 255);
                     else
                         SDL_SetRenderDrawColor(renderer, 227, 217, 170, 255);
                 }
