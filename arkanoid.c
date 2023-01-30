@@ -451,7 +451,7 @@ int main(int argc, char *argv[])
         fprintf(stderr, "Failed at initializing font.\n");
         return 0;
     }
-    Font = TTF_OpenFont("./include/Retro_Gaming.ttf", 30);
+    Font = TTF_OpenFont("./include/font/Retro_Gaming.ttf", 30);
     if (Font == NULL)
     {
         fprintf(stderr, "Failed at opening font.\n");
