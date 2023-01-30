@@ -20,8 +20,11 @@
 ### Zawartosc pliku
 > Maksymalnie 14 kolumn. Rzedow nie moze byc wiecej niz 9, a caly rzad MUSI byc wypelniony.</br>
 > 0 - puste miejsce</br>
-> 1 - cegielka</br>
-> Podanie zbyt duzej ilosci kolumn lub rzedow albo nie wypelnienie calego rzedu zainicjuje odpalenie ze standardowa mapa.
+> 1 - cegielka z 1 zyciem</br>
+> 2 - cegielka z 2 zyciami</br>
+> 3 - cegielka z 3 zyciami</br>
+> 4 - niezniszczalna cegiełka</br>
+> Podanie zbyt duzej ilosci kolumn lub rzedow albo nie wypelnienie calego rzedu zainicjuje odpalenie ze standardowa mapa. Badz swiadomy ze mozesz ulorzyc mape ktorej nie da sie przejsc!!!
 ### Przykladowa zawartosc pliku
 > 01010101010101</br>
 > 10101010101010</br>

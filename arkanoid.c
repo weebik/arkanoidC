@@ -14,8 +14,8 @@
 #define PADDLE_Y 800
 #define BALL_DIAMETER 20
 #define BALL_SPEED 15
-#define MAX_ROW 9
-#define MAX_COL 14
+#define MAX_IN_COL 9
+#define MAX_IN_ROW 14
 #define BRICK_HEIGHT 40
 #define FPS 30
 
@@ -29,8 +29,8 @@ SDL_Window *window;
 TTF_Font *Font;
 
 int is_running, bricks_on, afterReset, nightMode, firstLaunch = 1;
-int bricks[MAX_ROW][MAX_COL];
-int map[MAX_ROW][MAX_COL];
+int bricks[MAX_IN_COL][MAX_IN_ROW];
+int map[MAX_IN_COL][MAX_IN_ROW];
 
 float mvX, mvY;
 
@@ -44,13 +44,13 @@ void resetGame(void)
     ball.w = ball.h = BALL_DIAMETER;
     ball.x = (SCREEN_WIDTH / 2) - (BALL_DIAMETER / 2);
     ball.y = PADDLE_Y - 200;
-    brick.w = (SCREEN_WIDTH - 10 - (10 * MAX_COL)) / MAX_COL;
+    brick.w = (SCREEN_WIDTH - 50 - (10 * MAX_IN_ROW)) / MAX_IN_ROW;
     brick.h = BRICK_HEIGHT;
     mvX = 0;
     mvY = BALL_SPEED;
-    for (int i = 0; i < MAX_ROW; i++)
+    for (int i = 0; i < MAX_IN_COL; i++)
     {
-        for (int j = 0; j < MAX_COL; j++)
+        for (int j = 0; j < MAX_IN_ROW; j++)
         {
             bricks[i][j] = map[i][j];
             if (bricks[i][j])
@@ -100,16 +100,16 @@ void endScreen(void)
 
 void setBrickPos(int i, int j)
 {
-    brick.x = (SCREEN_WIDTH - MAX_COL * brick.w - (MAX_COL - 1) * 10) / 2 + j * brick.w + j * 10;
+    brick.x = (SCREEN_WIDTH - MAX_IN_ROW * brick.w - (MAX_IN_ROW - 1) * 10) / 2 + j * brick.w + j * 10;
     brick.y = 20 + i + i * brick.h + i * 10;
     return;
 }
 
 void defaultMapInit(void)
 {
-    for (int i = 0; i < MAX_ROW; i++)
+    for (int i = 0; i < MAX_IN_COL; i++)
     {
-        for (int j = 0; j < MAX_COL; j++)
+        for (int j = 0; j < MAX_IN_ROW; j++)
         {
             map[i][j] = 1;
         }
@@ -120,26 +120,26 @@ void defaultMapInit(void)
 void customMapInit(FILE *file)
 {
     int c, cnt = 0;
-    for (int i = 0; i < MAX_ROW; i++)
+    for (int i = 0; i < MAX_IN_COL; i++)
     {
-        for (int j = 0; j < MAX_COL; j++)
+        for (int j = 0; j < MAX_IN_ROW; j++)
         {
             bricks[i][j] = 0;
             map[i][j] = 0;
         }
     }
-    for (int i = 0; i <= MAX_ROW; i++)
+    for (int i = 0; i <= MAX_IN_COL; i++)
     {
-        if (i == MAX_ROW && c != EOF)
+        if (i == MAX_IN_COL && c != EOF)
         {
             fprintf(stderr, "Wrong file contents. Initializing default map.\n");
             defaultMapInit();
             return;
         }
-        for (int j = 0; j <= MAX_COL; j++)
+        for (int j = 0; j <= MAX_IN_ROW; j++)
         {
             c = getc(file);
-            if (j == MAX_COL)
+            if (j == MAX_IN_ROW)
             {
                 if (c != '\n' && c != EOF)
                 {
@@ -275,9 +275,9 @@ void prepare(void)
     ball.x += mvX;
     ball.y += mvY;
 
-    for (int i = 0; i < MAX_ROW; i++)
+    for (int i = 0; i < MAX_IN_COL; i++)
     {
-        for (int j = 0; j < MAX_COL; j++)
+        for (int j = 0; j < MAX_IN_ROW; j++)
         {
             if (bricks[i][j] > 0)
                 setBrickPos(i, j);
@@ -334,9 +334,9 @@ void draw(void)
         SDL_SetRenderDrawColor(renderer, 205, 102, 77, 255);
         SDL_RenderFillRect(renderer, &ball);
     }
-    for (int i = 0; i < MAX_ROW; i++)
+    for (int i = 0; i < MAX_IN_COL; i++)
     {
-        for (int j = 0; j < MAX_COL; j++)
+        for (int j = 0; j < MAX_IN_ROW; j++)
         {
             if (bricks[i][j])
             {
