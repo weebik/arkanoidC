@@ -8,8 +8,6 @@
 
 #define SCREEN_WIDTH 1000
 #define SCREEN_HEIGHT 875
-#define MAX_DELAY 500
-#define MAX_FPS 60
 #define PADDLE_WIDTH 250
 #define PADDLE_HEIGHT 20
 #define PADDLE_SPEED 15
@@ -154,7 +152,7 @@ void customMapInit(FILE *file)
             }
             else
             {
-                if (c != '1' && c != '0')
+                if (c != '1' && c != '0' && c != '2' && c != '3' && c != '4')
                 {
                     if (j == 0 && c == EOF)
                         break;
@@ -174,7 +172,6 @@ void customMapInit(FILE *file)
     {
         fprintf(stderr, "Wrong file contents. Initializing default map.\n");
         defaultMapInit();
-        return;
     }
     return;
 }
@@ -282,12 +279,13 @@ void prepare(void)
     {
         for (int j = 0; j < MAX_COL; j++)
         {
-            if (bricks[i][j])
+            if (bricks[i][j] > 0)
                 setBrickPos(i, j);
-            if (SDL_HasIntersection(&ball, &brick) && bricks[i][j] == 1)
+            if (SDL_HasIntersection(&ball, &brick) && bricks[i][j])
             {
                 bricks_on--;
-                bricks[i][j] = 0;
+                if (bricks[i][j] != 4)
+                    bricks[i][j] -= 1;
                 brickBounce();
             }
         }
@@ -318,25 +316,23 @@ void draw(void)
 {
     if (nightMode < 1)
     {
-        SDL_SetRenderDrawColor(renderer, 205, 200, 176, 255);
+        SDL_SetRenderDrawColor(renderer, 199, 193, 172, 255);
         SDL_RenderClear(renderer);
         SDL_SetRenderDrawColor(renderer, 153, 152, 131, 255);
         SDL_RenderFillRect(renderer, &paddle);
         SDL_RenderDrawLineF(renderer, 0, paddle.y + (paddle.h / 2), SCREEN_WIDTH, paddle.y + (paddle.h / 2));
         SDL_SetRenderDrawColor(renderer, 205, 102, 77, 255);
         SDL_RenderFillRect(renderer, &ball);
-        SDL_SetRenderDrawColor(renderer, 87, 84, 74, 255);
     }
     else
     {
-        SDL_SetRenderDrawColor(renderer, 15, 13, 12, 255);
+        SDL_SetRenderDrawColor(renderer, 18, 20, 19, 255);
         SDL_RenderClear(renderer);
         SDL_SetRenderDrawColor(renderer, 82, 67, 58, 255);
         SDL_RenderFillRect(renderer, &paddle);
         SDL_RenderDrawLineF(renderer, 0, paddle.y + (paddle.h / 2), SCREEN_WIDTH, paddle.y + (paddle.h / 2));
         SDL_SetRenderDrawColor(renderer, 205, 102, 77, 255);
         SDL_RenderFillRect(renderer, &ball);
-        SDL_SetRenderDrawColor(renderer, 61, 48, 42, 255);
     }
     for (int i = 0; i < MAX_ROW; i++)
     {
@@ -345,6 +341,28 @@ void draw(void)
             if (bricks[i][j])
             {
                 setBrickPos(i, j);
+                if (nightMode < 1)
+                {
+                    if (bricks[i][j] == 4)
+                        SDL_SetRenderDrawColor(renderer, 136, 124, 101, 255);
+                    else if (bricks[i][j] == 3)
+                        SDL_SetRenderDrawColor(renderer, 187, 155, 129, 255);
+                    else if (bricks[i][j] == 2)
+                        SDL_SetRenderDrawColor(renderer, 188, 175, 145, 255);
+                    else
+                        SDL_SetRenderDrawColor(renderer, 227, 217, 170, 255);
+                }
+                else
+                {
+                    if (bricks[i][j] == 4)
+                        SDL_SetRenderDrawColor(renderer, 35, 36, 31, 255);
+                    else if (bricks[i][j] == 3)
+                        SDL_SetRenderDrawColor(renderer, 62, 60, 50, 255);
+                    else if (bricks[i][j] == 2)
+                        SDL_SetRenderDrawColor(renderer, 88, 75, 62, 255);
+                    else
+                        SDL_SetRenderDrawColor(renderer,118, 98, 87, 255);
+                }
                 SDL_RenderFillRect(renderer, &brick);
             }
         }
@@ -378,7 +396,7 @@ void afterResetAwait(void)
     if (SDL_RenderCopy(renderer, messageTexture, NULL, &dstrect) < 0)
         fprintf(stderr, "Failed at setting texture to current rendering.\n");
     SDL_RenderPresent(renderer);
-    while(1)
+    while (1)
     {
         if (SDL_WaitEvent(&event))
         {
