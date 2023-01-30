@@ -5,6 +5,7 @@
 #include <time.h>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_ttf.h>
+#include <SDL2/SDL_mixer.h>
 
 #define SCREEN_WIDTH 1000
 #define SCREEN_HEIGHT 875
@@ -27,6 +28,12 @@ SDL_Surface *message;
 SDL_Texture *messageTexture;
 SDL_Window *window;
 TTF_Font *Font;
+
+Mix_Chunk *paddleBounce_sound;
+Mix_Chunk *brickBounce_sound;
+Mix_Chunk *winScreen_sound;
+Mix_Chunk *loseScreen_sound;
+Mix_Chunk *brickDestroyed_sound;
 
 int is_running, bricks_on, afterReset, nightMode, firstLaunch = 1;
 int bricks[MAX_IN_COL][MAX_IN_ROW];
@@ -68,9 +75,15 @@ void endScreen(void)
     SDL_RenderClear(renderer);
     TTF_SetFontSize(Font, 100);
     if (bricks_on == 0)
+    {
+        Mix_PlayChannel(-1, winScreen_sound, 0);
         message = TTF_RenderText_Solid(Font, "[!YOU WIN!]", fontColor);
+    }
     else
+    {
+        Mix_PlayChannel(-1, loseScreen_sound, 0);
         message = TTF_RenderText_Solid(Font, "[YOU LOSE]", fontColor);
+    }
     if (message == NULL)
     {
         fprintf(stderr, "Failed at creating message.\n");
@@ -258,15 +271,26 @@ void brickBounce(void)
 void prepare(void)
 {
     if (SDL_HasIntersection(&ball, &paddle))
+    {
+        Mix_PlayChannel(-1, paddleBounce_sound, 0);
         paddle_bounce();
+    }
     if (paddle.x <= 0)
+    {
         paddle.x = 0;
+    }
     if (paddle.x + paddle.w >= SCREEN_WIDTH)
+    {
         paddle.x = SCREEN_WIDTH - PADDLE_WIDTH;
+    }
     if (ball.x <= 0 || ball.x + BALL_DIAMETER >= SCREEN_WIDTH)
+    {
+        Mix_PlayChannel(-1, brickBounce_sound, 0);
         mvX = -mvX;
+    }
     if (ball.y <= 0)
     {
+        Mix_PlayChannel(-1, brickBounce_sound, 0);
         ball.y = 0;
         mvY = -mvY;
     }
@@ -288,7 +312,12 @@ void prepare(void)
                 {
                     bricks_on--;
                     bricks[i][j] -= 1;
+                    if (bricks[i][j] == 0)
+                    {
+                        Mix_PlayChannel(-1, brickDestroyed_sound, 0);
+                    }
                 }
+                Mix_PlayChannel(-1, brickBounce_sound, 0);
                 brickBounce();
             }
         }
@@ -457,6 +486,22 @@ int main(int argc, char *argv[])
         fprintf(stderr, "Failed at opening font.\n");
         return 0;
     }
+    if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048))
+    {
+        fprintf(stderr, "Failed at initializing sounds.\n");
+        return 0;
+    }
+    paddleBounce_sound = Mix_LoadWAV("./include/sound/paddleBounce.wav");
+    brickBounce_sound = Mix_LoadWAV("./include/sound/brickBounce.wav");
+    winScreen_sound = Mix_LoadWAV("./include/sound/winScreen.wav");
+    loseScreen_sound = Mix_LoadWAV("./include/sound/loseScreen.wav");
+    brickDestroyed_sound = Mix_LoadWAV("./include/sound/brickDestroyed.wav");
+    Mix_VolumeChunk(brickDestroyed_sound, 60);
+    if (brickBounce_sound == NULL || paddleBounce_sound == NULL || winScreen_sound == NULL || loseScreen_sound == NULL || brickDestroyed_sound == NULL)
+    {
+        fprintf(stderr, "Sound effects did not open properly.\n");
+        return 0;
+    }
     if (!SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "linear"))
         fprintf(stderr, "SetHint did not work properly.\n");
     srand(time(NULL));
@@ -504,9 +549,15 @@ int main(int argc, char *argv[])
         if (1000 / FPS > (SDL_GetTicks() - ticks))
             SDL_Delay(1000 / FPS - (SDL_GetTicks() - ticks));
     }
-    TTF_CloseFont(Font);
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
+    Mix_FreeChunk(paddleBounce_sound);
+    Mix_FreeChunk(brickBounce_sound);
+    Mix_FreeChunk(winScreen_sound);
+    Mix_FreeChunk(loseScreen_sound);
+    Mix_FreeChunk(brickDestroyed_sound);
+    Mix_CloseAudio();
+    TTF_CloseFont(Font);
     TTF_Quit();
     SDL_Quit();
     return 0;
