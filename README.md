@@ -14,9 +14,9 @@
 > Kompilacja:</br>
 > `./build.sh`</br>
 > Nastepnie:</br>
-> `./start` (odpala gre ze standardowa mapa)</br>
+> `./arkanoid` (odpala gre ze standardowa mapa)</br>
 > Opcjonalnie:</br>
-> `./start [sciezka pliku]` (odpala gre z wczytana mapa z pliku)</br>
+> `./arkanoid [sciezka pliku]` (odpala gre z wczytana mapa z pliku)</br>
 ### Zawartosc pliku
 > Maksymalnie 14 kolumn. Rzedow nie moze byc wiecej niz 9, a caly rzad MUSI byc wypelniony.</br>
 > 0 - puste miejsce</br>
