@@ -1,1 +1,1 @@
-gcc -std=c11 -xc -o start arkanoid.c -lSDL2 -lm -lSDL2_ttf
+gcc -std=c11 -xc -o arkanoid arkanoid.c -lSDL2 -lm -lSDL2_ttf

@@ -54,7 +54,8 @@ void resetGame(void)
         {
             bricks[i][j] = map[i][j];
             if (bricks[i][j])
-                bricks_on++;
+                if (bricks[i][j] != 4)
+                    bricks_on += bricks[i][j];
         }
     }
     afterReset = 1;
@@ -283,9 +284,11 @@ void prepare(void)
                 setBrickPos(i, j);
             if (SDL_HasIntersection(&ball, &brick) && bricks[i][j])
             {
-                bricks_on--;
                 if (bricks[i][j] != 4)
+                {
+                    bricks_on--;
                     bricks[i][j] -= 1;
+                }
                 brickBounce();
             }
         }
@@ -361,7 +364,7 @@ void draw(void)
                     else if (bricks[i][j] == 2)
                         SDL_SetRenderDrawColor(renderer, 88, 75, 62, 255);
                     else
-                        SDL_SetRenderDrawColor(renderer,118, 98, 87, 255);
+                        SDL_SetRenderDrawColor(renderer, 118, 98, 87, 255);
                 }
                 SDL_RenderFillRect(renderer, &brick);
             }
