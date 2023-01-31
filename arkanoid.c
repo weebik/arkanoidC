@@ -570,5 +570,6 @@ int main(int argc, char *argv[])
     TTF_CloseFont(Font);
     TTF_Quit();
     SDL_Quit();
+    Mix_Quit();
     return 0;
 }
