@@ -328,6 +328,11 @@ void prepare(void)
             }
         }
     }
+    if (bricks_on == 0)
+    {
+        SDL_Delay(500);
+        endScreen();
+    }
     return;
 }
 
@@ -469,6 +474,24 @@ void afterResetAwait(void)
     return;
 }
 
+void deinit(void)
+{
+    SDL_DestroyRenderer(renderer);
+    SDL_DestroyWindow(window);
+    Mix_FreeMusic(background);
+    Mix_FreeChunk(paddleBounce_sound);
+    Mix_FreeChunk(brickBounce_sound);
+    Mix_FreeChunk(winScreen_sound);
+    Mix_FreeChunk(loseScreen_sound);
+    Mix_FreeChunk(brickDestroyed_sound);
+    Mix_CloseAudio();
+    TTF_CloseFont(Font);
+    TTF_Quit();
+    SDL_Quit();
+    Mix_Quit();
+    return;
+}
+
 int main(int argc, char *argv[])
 {
     if (SDL_Init(SDL_INIT_EVERYTHING) < 0)
@@ -550,26 +573,9 @@ int main(int argc, char *argv[])
         draw();
         if (afterReset)
             afterResetAwait();
-        if (bricks_on == 0)
-        {
-            SDL_Delay(500);
-            endScreen();
-        }
         if (1000 / FPS > (SDL_GetTicks() - ticks))
             SDL_Delay(1000 / FPS - (SDL_GetTicks() - ticks));
     }
-    SDL_DestroyRenderer(renderer);
-    SDL_DestroyWindow(window);
-    Mix_FreeMusic(background);
-    Mix_FreeChunk(paddleBounce_sound);
-    Mix_FreeChunk(brickBounce_sound);
-    Mix_FreeChunk(winScreen_sound);
-    Mix_FreeChunk(loseScreen_sound);
-    Mix_FreeChunk(brickDestroyed_sound);
-    Mix_CloseAudio();
-    TTF_CloseFont(Font);
-    TTF_Quit();
-    SDL_Quit();
-    Mix_Quit();
+    deinit();
     return 0;
 }
