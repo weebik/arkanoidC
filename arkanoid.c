@@ -28,7 +28,7 @@ SDL_Surface *message;
 SDL_Texture *messageTexture;
 SDL_Window *window;
 TTF_Font *Font;
-
+Mix_Music *background;
 Mix_Chunk *paddleBounce_sound;
 Mix_Chunk *brickBounce_sound;
 Mix_Chunk *winScreen_sound;
@@ -489,18 +489,19 @@ int main(int argc, char *argv[])
         fprintf(stderr, "Failed at opening font.\n");
         return 0;
     }
-    if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048))
+    if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 1024))
     {
         fprintf(stderr, "Failed at initializing sounds.\n");
         return 0;
     }
+    background = Mix_LoadMUS("./include/sound/background.mp3");
     paddleBounce_sound = Mix_LoadWAV("./include/sound/paddleBounce.wav");
     brickBounce_sound = Mix_LoadWAV("./include/sound/brickBounce.wav");
     winScreen_sound = Mix_LoadWAV("./include/sound/winScreen.wav");
     loseScreen_sound = Mix_LoadWAV("./include/sound/loseScreen.wav");
     brickDestroyed_sound = Mix_LoadWAV("./include/sound/brickDestroyed.wav");
     Mix_VolumeChunk(brickDestroyed_sound, 60);
-    if (brickBounce_sound == NULL || paddleBounce_sound == NULL || winScreen_sound == NULL || loseScreen_sound == NULL || brickDestroyed_sound == NULL)
+    if (background == NULL || brickBounce_sound == NULL || paddleBounce_sound == NULL || winScreen_sound == NULL || loseScreen_sound == NULL || brickDestroyed_sound == NULL)
     {
         fprintf(stderr, "Sound effects did not open properly.\n");
         return 0;
@@ -533,6 +534,8 @@ int main(int argc, char *argv[])
     is_running = 1;
     nightMode = -1;
     unsigned int ticks;
+    Mix_PlayMusic(background, -1);
+    Mix_VolumeMusic(20);
     while (is_running != 0)
     {
         ticks = SDL_GetTicks();
@@ -546,14 +549,17 @@ int main(int argc, char *argv[])
             afterResetAwait();
         if (bricks_on == 0)
         {
+            Mix_PauseMusic();
             SDL_Delay(500);
             endScreen();
+            Mix_PauseMusic();
         }
         if (1000 / FPS > (SDL_GetTicks() - ticks))
             SDL_Delay(1000 / FPS - (SDL_GetTicks() - ticks));
     }
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
+    Mix_FreeMusic(background);
     Mix_FreeChunk(paddleBounce_sound);
     Mix_FreeChunk(brickBounce_sound);
     Mix_FreeChunk(winScreen_sound);
