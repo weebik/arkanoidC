@@ -71,6 +71,7 @@ void resetGame(void)
 
 void endScreen(void)
 {
+    Mix_PauseMusic();
     SDL_SetRenderDrawColor(renderer, 15, 13, 12, 255);
     SDL_RenderClear(renderer);
     TTF_SetFontSize(Font, 100);
@@ -108,6 +109,8 @@ void endScreen(void)
     SDL_Delay(2000);
     SDL_FreeSurface(message);
     SDL_DestroyTexture(messageTexture);
+    Mix_RewindMusic();
+    Mix_ResumeMusic();
     resetGame();
     return;
 }
@@ -549,10 +552,8 @@ int main(int argc, char *argv[])
             afterResetAwait();
         if (bricks_on == 0)
         {
-            Mix_PauseMusic();
             SDL_Delay(500);
             endScreen();
-            Mix_PauseMusic();
         }
         if (1000 / FPS > (SDL_GetTicks() - ticks))
             SDL_Delay(1000 / FPS - (SDL_GetTicks() - ticks));
