@@ -11,7 +11,7 @@
 > **Upewnij sie ze masz zainstalowane SDL2**</br>
 >`sudo apt-get install libsdl2-dev`</br>
 >`sudo apt-get install libsdl2-ttf-dev`</br>
->`sudo apt-get install libsdl2-mixer-2.0-0`</br>
+>`sudo apt-get install libsdl2-mixer-dev`</br>
 > Kompilacja:</br>
 > `./build.sh`</br>
 > Nastepnie:</br>
