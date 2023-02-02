@@ -347,7 +347,7 @@ void input(void)
         nightMode = -nightMode;
         SDL_Delay(200);
     }
-    if(input[SDL_SCANCODE_H])
+    if (input[SDL_SCANCODE_H])
         helpScreen();
     if (input[SDL_SCANCODE_Q])
         is_running = 0;
@@ -489,6 +489,33 @@ void deinit(void)
 
 int main(int argc, char *argv[])
 {
+    if (argc == 2)
+    {
+        if (strcmp("--help", argv[1]) == 0)
+        {
+            printf("KEY BINDINGS:\n\tLEFT_ARROW or A \tmove left\n\tRIGHT_ARROW or D\tmove right\n\tR\t\t\treset\n\tE\t\t\tswitch nightmode\n\tH\t\t\thelp\n\tQ\t\t\tquit\n\n");
+            printf("CUSTOM MAPS:\n\tCompilation:\t./arkanoid [FILE_PATH]\n\tFile content:\tNo more than 9 rows, each row is made of 14 bricks. Rows must be fully filled.\n\t\t0\tempty brick\n\t\t1\tbrick with 1 life\n\t\t2\tbrick with 2 lifes\n\t\t3\tbrick with 3 lifes\n\t\t4\tindestructible brick\n");
+            return 0;
+        }
+        FILE *file = fopen(argv[1], "r");
+        if (file == NULL)
+        {
+            defaultMapInit();
+            fprintf(stderr, "Failed at opening file. Initializing default map.\n");
+        }
+        else
+        {
+            customMapInit(file);
+            fclose(file);
+        }
+    }
+    else if (argc > 2)
+    {
+        fprintf(stderr, "Too many arguments. Initializing default map.\n");
+        defaultMapInit();
+    }
+    else
+        defaultMapInit();
     if (SDL_Init(SDL_INIT_EVERYTHING) < 0)
     {
         fprintf(stderr, "Failed Initialization\n");
@@ -530,34 +557,6 @@ int main(int argc, char *argv[])
     if (!SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "linear"))
         fprintf(stderr, "SetHint did not work properly.\n");
     srand(time(NULL));
-    if (argc == 2)
-    {
-        if(strcmp("--help", argv[1])==0)
-        {
-            deinit();
-            printf("KEY BINDINGS:\n\tLEFT_ARROW or A \tmove left\n\tRIGHT_ARROW or D\tmove right\n\tR\t\t\treset\n\tE\t\t\tswitch nightmode\n\tH\t\t\thelp\n\tQ\t\t\tquit\n\n");
-            printf("CUSTOM MAPS:\n\tCompilation:\t./arkanoid [FILE_PATH]\n\tFile content:\tNo more than 9 rows, each row is made of 14 bricks. Rows must be fully filled.\n\t\t0\tempty brick\n\t\t1\tbrick with 1 life\n\t\t2\tbrick with 2 lifes\n\t\t3\tbrick with 3 lifes\n\t\t4\tindestructible brick\n");
-            return 0;
-        }
-        FILE *file = fopen(argv[1], "r");
-        if (file == NULL)
-        {
-            defaultMapInit();
-            fprintf(stderr, "Failed at opening file. Initializing default map.\n");
-        }
-        else
-        {
-            customMapInit(file);
-            fclose(file);
-        }
-    }
-    else if (argc > 2)
-    {
-        fprintf(stderr, "Too many arguments. Initializing default map.\n");
-        defaultMapInit();
-    }
-    else
-        defaultMapInit();
     resetGame();
     is_running = 1;
     nightMode = -1;
