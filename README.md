@@ -9,15 +9,25 @@
 > <kbd>Q</kbd> &rarr; Wyjscie</br>
 ### Kompilacja i uruchomienie
 > **Upewnij sie ze masz zainstalowane SDL2**</br>
->`sudo apt-get install libsdl2-dev`</br>
->`sudo apt-get install libsdl2-ttf-dev`</br>
->`sudo apt-get install libsdl2-mixer-dev`</br>
+```bash
+  sudo apt-get install libsdl2-dev
+  sudo apt-get install libsdl2-ttf-dev
+  sudo apt-get install libsdl2-mixer-dev
+```
 > Kompilacja:</br>
-> `./build.sh`</br>
+```bash
+  ./build.sh
+```
 > Nastepnie:</br>
-> `./arkanoid` (odpala gre ze standardowa mapa)</br>
+```bash
+  ./arkanoid
+```
+>(odpala gre ze standardowa mapa)</br>
 > Opcjonalnie:</br>
-> `./arkanoid [sciezka pliku]` (odpala gre z wczytana mapa z pliku)</br>
+```bash
+  ./arkanoid [sciezka pliku]
+```
+>(odpala gre z wczytana mapa z pliku)</br>
 ### Zawartosc pliku
 > Maksymalnie 14 kolumn. Rzedow nie moze byc wiecej niz 9, a caly rzad MUSI byc wypelniony.</br>
 > 0 - puste miejsce</br>
