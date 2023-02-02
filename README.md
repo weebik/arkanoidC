@@ -28,6 +28,11 @@
   ./arkanoid [sciezka pliku]
 ```
 >(odpala gre z wczytana mapa z pliku)</br>
+>lub</br>
+```bash
+  ./arkanoid --help
+```
+>(wypisuje klawiszologie oraz instrukcje obslugi pliku)</br>
 ### Zawartosc pliku
 > Maksymalnie 14 kolumn. Rzedow nie moze byc wiecej niz 9, a caly rzad MUSI byc wypelniony.</br>
 > 0 - puste miejsce</br>
