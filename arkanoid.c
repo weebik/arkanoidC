@@ -51,7 +51,7 @@ void resetGame(void)
     ball.w = ball.h = BALL_DIAMETER;
     ball.x = (SCREEN_WIDTH / 2) - (BALL_DIAMETER / 2);
     ball.y = PADDLE_Y - 200;
-    brick.w = (SCREEN_WIDTH - 50 - (10 * MAX_IN_ROW)) / MAX_IN_ROW;
+    brick.w = (SCREEN_WIDTH - 10 - (1 * MAX_IN_ROW)) / MAX_IN_ROW;
     brick.h = BRICK_HEIGHT;
     mvX = 0;
     mvY = BALL_SPEED;
@@ -66,6 +66,11 @@ void resetGame(void)
         }
     }
     afterReset = 1;
+    return;
+}
+
+void helpScreen(void)
+{
     return;
 }
 
@@ -117,8 +122,8 @@ void endScreen(void)
 
 void setBrickPos(int i, int j)
 {
-    brick.x = (SCREEN_WIDTH - MAX_IN_ROW * brick.w - (MAX_IN_ROW - 1) * 10) / 2 + j * brick.w + j * 10;
-    brick.y = 20 + i + i * brick.h + i * 10;
+    brick.x = (SCREEN_WIDTH - MAX_IN_ROW * brick.w - (MAX_IN_ROW - 1) * 1) / 2 + j * brick.w + j * 1;
+    brick.y = 20 + i + i * brick.h + i * 1;
     return;
 }
 
@@ -136,7 +141,7 @@ void defaultMapInit(void)
 
 void customMapInit(FILE *file)
 {
-    int c, cnt = 0;
+    int c, cnt = 0, wrongContent = 0;
     for (int i = 0; i < MAX_IN_COL; i++)
     {
         for (int j = 0; j < MAX_IN_ROW; j++)
@@ -149,9 +154,8 @@ void customMapInit(FILE *file)
     {
         if (i == MAX_IN_COL && c != EOF)
         {
-            fprintf(stderr, "Wrong file contents. Initializing default map.\n");
-            defaultMapInit();
-            return;
+            wrongContent = 1;
+            break;
         }
         for (int j = 0; j <= MAX_IN_ROW; j++)
         {
@@ -160,9 +164,8 @@ void customMapInit(FILE *file)
             {
                 if (c != '\n' && c != EOF)
                 {
-                    fprintf(stderr, "Wrong file contents. Initializing default map.\n");
-                    defaultMapInit();
-                    return;
+                    wrongContent = 1;
+                    break;
                 }
                 else
                     continue;
@@ -173,9 +176,8 @@ void customMapInit(FILE *file)
                 {
                     if (j == 0 && c == EOF)
                         break;
-                    fprintf(stderr, "Wrong file contents. Initializing default map.\n");
-                    defaultMapInit();
-                    return;
+                    wrongContent = 1;
+                    break;
                 }
             }
             if (c == EOF)
@@ -185,7 +187,7 @@ void customMapInit(FILE *file)
                 cnt++;
         }
     }
-    if (cnt == 0)
+    if (cnt == 0 || wrongContent == 1)
     {
         fprintf(stderr, "Wrong file contents. Initializing default map.\n");
         defaultMapInit();
@@ -309,21 +311,16 @@ void prepare(void)
         {
             if (bricks[i][j] > 0)
                 setBrickPos(i, j);
-            if (SDL_HasIntersection(&ball, &brick) && bricks[i][j])
+            if (bricks[i][j] && SDL_HasIntersection(&ball, &brick))
             {
                 if (bricks[i][j] != 4)
                 {
                     bricks_on--;
                     bricks[i][j] -= 1;
                     if (bricks[i][j] == 0)
-                    {
                         Mix_PlayChannel(-1, brickDestroyed_sound, 0);
-                    }
-                    else
-                    {
-                        Mix_PlayChannel(-1, brickBounce_sound, 0);
-                    }
                 }
+                Mix_PlayChannel(-1, brickBounce_sound, 0);
                 brickBounce();
             }
         }
@@ -350,6 +347,8 @@ void input(void)
         nightMode = -nightMode;
         SDL_Delay(200);
     }
+    if(input[SDL_SCANCODE_H])
+        helpScreen();
     if (input[SDL_SCANCODE_Q])
         is_running = 0;
     return;
@@ -387,9 +386,7 @@ void draw(void)
                 if (nightMode < 1)
                 {
                     if (bricks[i][j] == 4)
-                    {
                         SDL_SetRenderDrawColor(renderer, 136, 124, 101, 255);
-                    }
                     else if (bricks[i][j] == 3)
                         SDL_SetRenderDrawColor(renderer, 187, 155, 129, 255);
                     else if (bricks[i][j] == 2)
@@ -400,9 +397,7 @@ void draw(void)
                 else
                 {
                     if (bricks[i][j] == 4)
-                    {
                         SDL_SetRenderDrawColor(renderer, 35, 36, 31, 255);
-                    }
                     else if (bricks[i][j] == 3)
                         SDL_SetRenderDrawColor(renderer, 62, 60, 50, 255);
                     else if (bricks[i][j] == 2)
@@ -537,6 +532,13 @@ int main(int argc, char *argv[])
     srand(time(NULL));
     if (argc == 2)
     {
+        if(strcmp("--help", argv[1])==0)
+        {
+            deinit();
+            printf("KEY BINDINGS:\n\tLEFT_ARROW or A \tmove left\n\tRIGHT_ARROW or D\tmove right\n\tR\t\t\treset\n\tE\t\t\tswitch nightmode\n\tH\t\t\thelp\n\tQ\t\t\tquit\n\n");
+            printf("CUSTOM MAPS:\n\tCompilation:\t./arkanoid [FILE_PATH]\n\tFile content:\tNo more than 9 rows, each row is made of 14 bricks. Rows must be fully filled.\n\t\t0\tempty brick\n\t\t1\tbrick with 1 life\n\t\t2\tbrick with 2 lifes\n\t\t3\tbrick with 3 lifes\n\t\t4\tindestructible brick\n");
+            return 0;
+        }
         FILE *file = fopen(argv[1], "r");
         if (file == NULL)
         {
